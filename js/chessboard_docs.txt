@@ -1,0 +1,181 @@
+--Chess Util Functions
+
+validMove(move)
+    -Input must be a string. Returns true if move is of the form 'xj-yk',
+    where x and y are letters between a and h and j and k are numbers
+    between 1 and 8.
+
+validSquare(square)
+    -Input must be a string. Returns true if square is of the form 'xj',
+    where x is a letter between a and h and j is a number between one and
+    eight.
+
+validPieceCode(code)
+    -Input must be a string. Returns true if the string is of the form
+    'xj' where x is either b or w (for black/white) and j is in
+    [KQRNBP].
+
+validFen(fen)
+    -Input must be a string. Returns true if fen is of the form
+    'rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR', for example,
+    before the first white space in fen. It disregards everything
+    after and including the first white space in fen.
+
+validPositionObject(pos)
+    -Input ust be of type object. Returns true if every uninherited property
+    of pos is either a valid square (via validSquare) or is an index of pos
+    that is a valide piece code (validPieceCode(pos[i]) == true must be true
+    for any i in pos such that validSquare(i) is not true).
+
+fenToPieceCode(piece)
+    -Input must be a string of length one (in [kqrnbp] if black and [KQRNBP] if 
+    white), and changes it to 'bP' if it's a black pawn for example, or 'wK' if
+    it's the white king. Basically replacing the use of FEN's case sensitivity
+    for determining piece color with 'b' and 'w', and changing the piece code
+    to always be upper case.
+
+pieceCodeToFen(piece)
+    -The inverse of fenToPieceCode (converts 'bK' to 'k', 'wP' to 'P', etc.).
+
+fenToObj(fen)
+    -Converts a FEN string to a position object, or returns false if the
+    FEN string is invalid. It ignores anything in fen after and including the
+    first white space.
+    For example, if fen is 'rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b 
+    KQkq e3 0 1', it returns {a8: "bR", b8: "bN", c8: "bB", d8: "bQ", 
+    e8: "bK"…}, with a key for every non-empty square in the code, and the
+    value for that key being the piece code occupying that square.
+
+objToFen(obj)
+    -Inverse of fenToObj, returns false if obj is not a valid position object.
+    Also does not include information like castling or anything that comes
+    after the first white space of a normal fen code.
+
+window['Chessboard'] is either set to window['Chessboard'] if that exists,
+or contains a function that is basically the rest of the code in the file,
+with containerElOrId and cfg passed in to it as arguments.
+
+
+--Constants
+
+START_FEN is the normal starting position in a FEN string.
+
+START_POSITION is the same as START_FEN except as a position object.
+
+CSS is an object matching class names to unique class name strings.
+
+
+--JS Util Functions
+
+createId()
+    -Returns a string of the form 'xxxx-xxxx-xxxx-xxxx-xxxx-xxxx-xxxx-xxxx',
+    where each x is a hex digit between 0 and f.
+
+deepCopy(thing)
+    -Returns a parsed version of a stringified version of a JSON object.
+    As far as I can tell, this basically just returns the input you give it,
+    as long as it's a valid input to JSON.stringify().
+
+parseSemVer(version)
+    -Version is a string of 3 numbers, each separated by '.' characters. 
+    This function returns an object with {major: x, minor: y, patch: z} 
+    where x is equal to the number before the first '.' in base 10, minor
+    is the number between the two '.'s in base 10, and patch is the third
+    number in base 10.
+
+compareSemVer(version, minimum)
+    -Returns true if version is >= minimum.
+
+
+--Validation / Errors
+
+function error(code, msg, obj)
+    -If showErrors is set to false or is not set at all in cfg, nothing
+    happens. If showErrors is set to 'console' (and some other conditions),
+    console.log obj and continue. If showErrors is set to 'alert',
+    window.alert a formatted version of the error code and msg. If
+    showErrors is set to a function, that function is called with code,
+    msg and obj passed in as arguments.
+
+checkDeps()
+    -Check dependencies. containerElOrId must either be a string or something
+    that becomes a jQuery collection with size 1, i.e. a single DOM node or
+    jQuery object. Basically this function checks for a valid version of
+    jQuery and makes sure JSON and it's necessary functions exist.
+    This function returns true if everything is valid, or alerts an error
+    and returns false if something is missing or out of date.
+
+validAnimationSpeed(speed)
+    -Returns true if speed is equal to 'fast', 'slow', or a positive integer.
+
+expandConfig()
+    -Validate config / set default options. If cfg is a valid position object,
+    set cfg to a new object with position: cfg. 
+    Set cfg.orientation to 'white' unless it's already set to 'black'.
+    Variable CURRENT_ORIENTATION is set to cfg.orientation. 
+    Set cfg.showNotation to true unless it's already equal to false. 
+    Set cfg.dropOffBoard to 'snapback' unless it's already equal to 'trash'.
+    Set cfg.sparePieces to false unless it's already set to true.
+    Set cfg.draggable to true if cfg.sparePieces is true.
+    Set cfg.pieceTheme to 'img/chesspieces/wikipedia/{piece}.png'. 
+    Set various animation speed defaults unless validAnimationSpeed is true
+    for that property (see the code).
+    Make sure cfg.position is a valid position whether it's a position object
+    or a FEN string.
+    expandConfig returns true.
+
+
+--Dom Misc
+
+calculateSquareSize()
+    -Calculates square size based on the width of the container, i.e.
+    containerEl.css('width').
+
+createElIds()
+    -Create random IDs for elements using createId(). This populates
+    the object SQUARE_ELS_IDS with keys for each square of the form
+    'a1' and values of the form 'a1-x' where x is an id created by
+    createId().
+    This also populares the SPARE_PIECE_ELS_IDS object with keys of the form
+    'wQ' and values of the firm 'wQ-x' where x is an id created by
+    createId(). It creates one of these for each white and black piece, not
+    including duplicates (meaning there is only one id for each black pawn,
+    one id for each white knight, etc.).
+
+
+--Markup Building
+
+buildBoardContainer()
+    -Returns some html based on the contents of the CSS object and cfg. 
+    For example, if cfg.sparePieces is set to true, buildBoardContainer returns 
+    the following string:
+    "<div class="chessboard-63f37"><div class="spare-pieces-7492f spare-pieces-
+    top-4028b"></div><div class="board-b72b1"></div><div class="spare-pieces-
+    7492f spare-pieces-bottom-ae20f"></div></div>"
+
+buildBoard(orientation)
+    -Returns html based on the conents of CSS. If orientation is 'black',
+    the board's orientation will be reversed. Creates one div for each
+    row with, and inside that one div for each square. To see an example
+    of the output look at the source of a loaded page with a chessboard.
+
+buildPieceImgSrc(piece)
+    -The input is a piece string (e.g. 'bK') The function  populates cfg.
+    pieceTheme with the correct format for the file name.
+    E.g. cfg.pieceTheme becomes 'img/chesspieces/wikipedia/bK.png' if piece
+    is passed in as 'bK'. This function returns an empty string.
+
+buildPiece(piece, hidden, id)
+    -piece is a piece string (e.g. 'bK'). This function creates the div
+    for a piece inside a div for a square. For example, buildPiece('bQ', false,
+    false) returns the following string:
+    '<img src="img/chesspieces/wikipedia/bQ.png" alt="" class="piece-417db"
+    data-piece="bQ" style="width: 49px;height: 49px;">'
+
+buildSparePieces(color)
+    -Returns html for all spare pieces of a certain color.
+
+
+--Animations
+
+animateSquareToSquare(src, dest, pice, completeFn)

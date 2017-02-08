@@ -1,0 +1,27 @@
+Chess(fen)
+    Basically the entire class. Has DEFAUL_POSITION set to the default fen, pawn 
+    offsets and piece offsets, ATTACKS, RAYS, SHIFTS, BITS, SQUARES and FLAGS.
+    This class contains all the following methods.
+
+clear()
+    Resets values to be empty, and then runs update_setup(generate_fen());
+
+reset()
+    Just says "load(DEFAULT_POSITION);"
+
+load(fen)
+    Returns false if not a valid fen (uses !validate_fen(fen).valid).
+
+move(move)
+    Uses generate_moves() and compares the move against that the values
+    in there. If there are none, returns null. Otherwise, uses
+    make_move(move_obj) to make the move, and returns a readable version
+    of the move.
+
+    There *must* be a bug in generate_moves() that can't find the right move
+    when the black d pawn is moved up twice in a row, since that move should be
+    legal. Make move must also be messing up, since that's where the fen
+    is being altered.
+
+generate_moves(options)
+    make_move is called in this function.
